@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>{{ prop.building_name }} - Unit {{ prop.unit_number }} | Property Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
   <style>
@@ -49,16 +50,50 @@
       background-color: #5a6268;
     }
 
+    /* Responsive Enhancements */
     @media (max-width: 768px) {
       h1 {
         font-size: 1.5rem;
+      }
+
+      .card-header {
+        font-size: 1rem;
+        text-align: center;
+      }
+
+      .list-group-item {
+        font-size: 0.95rem;
+      }
+
+      table {
+        font-size: 0.9rem;
+      }
+
+      .btn {
+        width: 100%;
+        font-size: 1rem;
+      }
+
+      .table th, .table td {
+        white-space: nowrap;
+      }
+    }
+
+    @media (max-width: 576px) {
+      h1 {
+        font-size: 1.3rem;
+        text-align: center;
+      }
+
+      .container {
+        padding: 15px;
       }
     }
   </style>
 </head>
 <body>
   <div class="container py-5">
-    <h1 class="mb-4">{{ prop.building_name }} - Unit {{ prop.unit_number }}</h1>
+    <h1 class="mb-4 text-center text-md-start">{{ prop.building_name }} - Unit {{ prop.unit_number }}</h1>
 
     <!-- Property Details -->
     <div class="card mb-4">
@@ -76,7 +111,7 @@
     </div>
 
     <!-- Owners -->
-    <div class="card">
+    <div class="card mb-4">
       <div class="card-header">Owner(s)</div>
       <div class="table-responsive">
         <table class="table table-bordered mb-0">
