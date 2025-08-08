@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Coldwell Banker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f4f6fc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    h1 {
+      color: #003366;
+      font-weight: 700;
+    }
+
+    .card {
+      border: none;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-title {
+      color: #003366;
+      font-weight: bold;
+    }
+
+    .btn-outline-primary {
+      width: 100%;
+    }
+
+    .pagination .page-item.active .page-link {
+      background-color: #0056d2;
+      border-color: #0056d2;
+    }
+
+    .pagination .page-link {
+      color: #0056d2;
+    }
+
+    .pagination .page-item.disabled .page-link {
+      color: #ccc;
+    }
+
+    .accordion-button:not(.collapsed) {
+      background-color: #0056d2;
+      color: white;
+    }
+
+    .accordion-button {
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .filter-desktop {
+        display: none !important;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .filter-mobile {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container py-5">
+  <h1 class="mb-4 text-center">Coldwell Banker</h1>
+
+  <!-- Mobile Filter Accordion -->
+  <div class="filter-mobile mb-4">
+    <div class="accordion" id="filterAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+            Filter & Sort
+          </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show">
+          <div class="accordion-body">
+            <form method="GET" class="row g-3">
+              {% include "filter_form.html" %}
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop Filters -->
+  <form method="GET" class="row g-3 align-items-end mb-4 filter-desktop">
+    {% include "filter_form.html" %}
+  </form>
+
+  <!-- Property Cards -->
+  <div class="row">
+    {% for prop in properties %}
+    <div class="col-md-4 mb-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">{{ prop.building_name }}</h5>
+          <p class="mb-1"><strong>Unit:</strong> {{ prop.unit_number }}</p>
+          <p class="mb-1"><strong>Area:</strong> {{ prop.area_sqft }} sqft</p>
+          <p class="mb-1"><strong>Beds:</strong> {{ prop.beds or 'N/A' }}</p>
+          <p class="mb-1"><strong>Price:</strong> {{ prop.price or 'N/A' }}</p>
+          <a href="{{ url_for('property_detail', property_id=prop._id) }}" class="btn btn-outline-primary mt-2">View Details</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if total_pages > 1 %}
+  <nav class="mt-4">
+    <ul class="pagination justify-content-center flex-wrap">
+      {% set neighbors = 2 %}
+      {% for p in range(1, total_pages + 1) %}
+        {% if p == 1 or p == total_pages or (p >= current_page - neighbors and p <= current_page + neighbors) %}
+          {% set args = request.args.to_dict() %}
+          {% set _ = args.update({'page': p}) %}
+          <li class="page-item {% if p == current_page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('home', **args) }}">{{ p }}</a>
+          </li>
+        {% elif p == current_page - neighbors - 1 or p == current_page + neighbors + 1 %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<div class="col-md-3">
+  <input type="text" name="building" class="form-control" placeholder="Building, Community, or Master Project" value="{{ request.args.get('building', '') }}">
+</div>
+
+<div class="col-md-2">
+  <select name="property_type" class="form-select">
+    <option value="">All Property Types</option>
+    {% for val in dropdowns.property_types %}
+      <option value="{{ val }}" {% if request.args.get('property_type') == val %}selected{% endif %}>{{ val }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<div class="col-md-1">
+  <select name="beds" class="form-select">
+    <option value="">Beds</option>
+    {% for val in dropdowns.beds_list %}
+      <option value="{{ val }}" {% if request.args.get('beds') == val|string %}selected{% endif %}>{{ val }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<div class="col-md-2">
+  <select name="sub_type" class="form-select">
+    <option value="">All Sub Types</option>
+    {% for val in dropdowns.sub_types %}
+      <option value="{{ val }}" {% if request.args.get('sub_type') == val %}selected{% endif %}>{{ val }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<div class="col-md-2">
+  <input type="number" name="min_area" class="form-control" placeholder="Min Area" value="{{ request.args.get('min_area', '') }}">
+</div>
+
+<div class="col-md-2">
+  <input type="number" name="max_area" class="form-control" placeholder="Max Area" value="{{ request.args.get('max_area', '') }}">
+</div>
+
+<div class="col-md-2">
+  <select name="sort_by" class="form-select">
+    <option value="price" {% if request.args.get('sort_by') == 'price' %}selected{% endif %}>Sort by Price</option>
+    <option value="area_sqft" {% if request.args.get('sort_by') == 'area_sqft' %}selected{% endif %}>Sort by Area</option>
+  </select>
+</div>
+
+<div class="col-md-2">
+  <select name="order" class="form-select">
+    <option value="asc" {% if request.args.get('order') == 'asc' %}selected{% endif %}>Ascending</option>
+    <option value="desc" {% if request.args.get('order') == 'desc' %}selected{% endif %}>Descending</option>
+  </select>
+</div>
+
+<div class="col-md-2 d-flex gap-2">
+  <button type="submit" class="btn btn-primary w-100">Apply</button>
+  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Clear</a>
+</div>

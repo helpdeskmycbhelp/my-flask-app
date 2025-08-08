@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ prop.building_name }} - Unit {{ prop.unit_number }} | Property Details</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+  <style>
+    body {
+      background-color: #f4f6fc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    h1 {
+      color: #003366;
+      font-weight: bold;
+    }
+
+    .card {
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+      background-color: #0056d2;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+
+    .list-group-item {
+      background-color: #fff;
+      border: none;
+      padding: 12px 18px;
+    }
+
+    table th {
+      background-color: #f1f3f6;
+      font-weight: 600;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      border: none;
+      font-weight: 500;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <h1 class="mb-4">{{ prop.building_name }} - Unit {{ prop.unit_number }}</h1>
+
+    <!-- Property Details -->
+    <div class="card mb-4">
+      <div class="card-header">Property Information</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item"><strong>Area:</strong> {{ prop.area_sqft }} sqft</li>
+        <li class="list-group-item"><strong>Beds:</strong> {{ prop.beds or "N/A" }}</li>
+        <li class="list-group-item"><strong>Community:</strong> {{ prop.community or "N/A" }}</li>
+        <li class="list-group-item"><strong>Master Project:</strong> {{ prop.master_project or "N/A" }}</li>
+        <li class="list-group-item"><strong>Property Type:</strong> {{ prop.property_type or "N/A" }}</li>
+        <li class="list-group-item"><strong>Sub Type:</strong> {{ prop.sub_type or "N/A" }}</li>
+        <li class="list-group-item"><strong>Land Number:</strong> {{ prop.land_number or "N/A" }}</li>
+        <li class="list-group-item"><strong>Price:</strong> {{ prop.price or "N/A" }}</li>
+      </ul>
+    </div>
+
+    <!-- Owners -->
+    <div class="card">
+      <div class="card-header">Owner(s)</div>
+      <div class="table-responsive">
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Contact</th>
+              <th>Registration Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for owner in prop.owners %}
+            <tr>
+              <td>{{ owner.owner_name }}</td>
+              <td>{{ owner.role }}</td>
+              <td>{{ owner.contact or "N/A" }}</td>
+              <td>{{ owner.registration_date }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <a href="{{ url_for('home') }}" class="btn btn-secondary mt-4">← Back to Listings</a>
+  </div>
+</body>
+</html>
