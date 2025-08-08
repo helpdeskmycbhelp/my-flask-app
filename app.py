@@ -38,6 +38,17 @@ def home():
         if max_area:
             query["area_sqft"]["$lte"] = float(max_area)
 
+    # Price filter
+    min_price = request.args.get("min_price")
+    max_price = request.args.get("max_price")
+    if min_price or max_price:
+        query["price"] = {}
+        if min_price:
+           query["price"]["$gte"] = float(min_price)
+        if max_price:
+           query["price"]["$lte"] = float(max_price)
+        
+
     # Sorting
     sort_field = request.args.get("sort_by", "price")
     sort_order = request.args.get("order", "asc")
