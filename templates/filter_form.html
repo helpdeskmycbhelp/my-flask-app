@@ -1,5 +1,7 @@
-<div class="col-md-3">
-  <input type="text" name="building" class="form-control" placeholder="Building, Community, or Master Project" value="{{ request.args.get('building', '') }}">
+<div class="col-md-4">
+  <input type="text" name="building" class="form-control"
+         placeholder="Search: Building, Master Project, Owner, Phone"
+         value="{{ request.args.get('building','') }}">
 </div>
 
 <div class="col-md-2">
@@ -15,54 +17,49 @@
   <select name="beds" class="form-select">
     <option value="">Beds</option>
     {% for val in dropdowns.beds_list %}
-      <option value="{{ val }}" {% if request.args.get('beds') == val|string %}selected{% endif %}>{{ val }}</option>
+      <option value="{{ val }}" {% if request.args.get('beds') == (val|string) %}selected{% endif %}>{{ val }}</option>
     {% endfor %}
   </select>
 </div>
 
-<div class="col-md-2">
-  <select name="sub_type" class="form-select">
-    <option value="">All Sub Types</option>
-    {% for val in dropdowns.sub_types %}
-      <option value="{{ val }}" {% if request.args.get('sub_type') == val %}selected{% endif %}>{{ val }}</option>
-    {% endfor %}
-  </select>
+<div class="col-md-1">
+  <input type="number" step="any" name="min_area" class="form-control" placeholder="Min Area"
+         value="{{ request.args.get('min_area','') }}">
 </div>
 
-<div class="col-md-2">
-  <input type="number" name="min_area" class="form-control" placeholder="Min Area" value="{{ request.args.get('min_area', '') }}">
+<div class="col-md-1">
+  <input type="number" step="any" name="max_area" class="form-control" placeholder="Max Area"
+         value="{{ request.args.get('max_area','') }}">
 </div>
 
-<div class="col-md-2">
-  <input type="number" name="max_area" class="form-control" placeholder="Max Area" value="{{ request.args.get('max_area', '') }}">
+<div class="col-md-1">
+  <input type="number" step="any" name="min_price" class="form-control" placeholder="Min Price"
+         value="{{ request.args.get('min_price','') }}">
 </div>
 
-<!-- Min Price -->
-<div class="col-12 col-md-2">
-  <input type="number" name="min_price" class="form-control" placeholder="Min Price" value="{{ request.args.get('min_price', '') }}">
+<div class="col-md-1">
+  <input type="number" step="any" name="max_price" class="form-control" placeholder="Max Price"
+         value="{{ request.args.get('max_price','') }}">
 </div>
-
-<!-- Max Price -->
-<div class="col-12 col-md-2">
-  <input type="number" name="max_price" class="form-control" placeholder="Max Price" value="{{ request.args.get('max_price', '') }}">
-</div>
-
 
 <div class="col-md-2">
   <select name="sort_by" class="form-select">
-    <option value="price" {% if request.args.get('sort_by') == 'price' %}selected{% endif %}>Sort by Price</option>
-    <option value="area_sqft" {% if request.args.get('sort_by') == 'area_sqft' %}selected{% endif %}>Sort by Area</option>
+    <!-- default to area on first load -->
+    <option value="price" {% if request.args.get('sort_by','area_sqft')=='price' %}selected{% endif %}>Sort by Price</option>
+    <option value="area_sqft" {% if request.args.get('sort_by','area_sqft')=='area_sqft' %}selected{% endif %}>Sort by Area</option>
+    <option value="building_name" {% if request.args.get('sort_by','area_sqft')=='building_name' %}selected{% endif %}>Sort by Building</option>
   </select>
 </div>
 
-<div class="col-md-2">
+<div class="col-md-1">
   <select name="order" class="form-select">
-    <option value="asc" {% if request.args.get('order') == 'asc' %}selected{% endif %}>Ascending</option>
-    <option value="desc" {% if request.args.get('order') == 'desc' %}selected{% endif %}>Descending</option>
+    <!-- default to desc so largest area first -->
+    <option value="asc"  {% if request.args.get('order','desc')=='asc' %}selected{% endif %}>Asc</option>
+    <option value="desc" {% if request.args.get('order','desc')=='desc' %}selected{% endif %}>Desc</option>
   </select>
 </div>
 
 <div class="col-md-2 d-flex gap-2">
   <button type="submit" class="btn btn-primary w-100">Apply</button>
-  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Clear</a>
+  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary w-100">Clear</a>
 </div>
