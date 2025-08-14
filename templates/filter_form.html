@@ -5,6 +5,48 @@
 
 <div class="row g-2 g-md-3 align-items-end">
 
+  {# 1) Cascading filters: City -> Building -> Community -> Sub Community #}
+  <!-- City -->
+  <div class="col-12 col-md-3">
+    <div class="form-floating">
+      <select name="city" class="form-select rounded-3 shadow-sm js-choices-single">
+        <option value="">All Cities</option>
+      </select>
+      <label>City</label>
+    </div>
+  </div>
+
+  <!-- Building (depends on city) -->
+  <div class="col-12 col-md-3">
+    <div class="form-floating">
+      <select name="building_name" class="form-select rounded-3 shadow-sm js-choices-single">
+        <option value="">All Buildings</option>
+      </select>
+      <label>Building</label>
+    </div>
+  </div>
+
+  <!-- Community (depends on city + building) -->
+  <div class="col-12 col-md-3">
+    <div class="form-floating">
+      <select name="community" class="form-select rounded-3 shadow-sm js-choices-single">
+        <option value="">All Communities</option>
+      </select>
+      <label>Community</label>
+    </div>
+  </div>
+
+  <!-- Sub Community (depends on city + building + community) -->
+  <div class="col-12 col-md-3">
+    <div class="form-floating">
+      <select name="sub_community" class="form-select rounded-3 shadow-sm js-choices-single">
+        <option value="">All Sub Communities</option>
+      </select>
+      <label>Sub Community</label>
+    </div>
+  </div>
+
+  {# 2) Other filters #}
   <!-- Property Type -->
   <div class="col-12 col-md-3">
     <div class="form-floating">
@@ -18,54 +60,6 @@
         {% endfor %}
       </select>
       <label>Property Type</label>
-    </div>
-  </div>
-
-  <!-- Community -->
-  <div class="col-12 col-md-3">
-    <div class="form-floating">
-      {% set selected_comm = request.args.get('community','') %}
-      {% set _communities = communities or [] %}
-      <select class="form-select rounded-3 shadow-sm js-choices-single"
-              name="community" aria-label="Community">
-        <option value="">All Communities</option>
-        {% for c in _communities %}
-          <option value="{{ c }}" {{ 'selected' if c == selected_comm else '' }}>{{ c }}</option>
-        {% endfor %}
-      </select>
-      <label>Community</label>
-    </div>
-  </div>
-
-  <!-- City -->
-  <div class="col-12 col-md-3">
-    <div class="form-floating">
-      {% set selected_city = request.args.get('city','') %}
-      {% set _cities = cities or [] %}
-      <select class="form-select rounded-3 shadow-sm js-choices-single"
-              name="city" aria-label="City">
-        <option value="">All Cities</option>
-        {% for city in _cities %}
-          <option value="{{ city }}" {{ 'selected' if city == selected_city else '' }}>{{ city }}</option>
-      {% endfor %}
-      </select>
-      <label>City</label>
-    </div>
-  </div>
-
-  <!-- Sub Community -->
-  <div class="col-12 col-md-3">
-    <div class="form-floating">
-      {% set selected_subcomm = request.args.get('sub_community','') %}
-      {% set _subcomms = sub_communities or [] %}
-      <select class="form-select rounded-3 shadow-sm js-choices-single"
-              name="sub_community" aria-label="Sub Community">
-        <option value="">All Sub Communities</option>
-        {% for sc in _subcomms %}
-          <option value="{{ sc }}" {{ 'selected' if sc == selected_subcomm else '' }}>{{ sc }}</option>
-        {% endfor %}
-      </select>
-      <label>Sub Community</label>
     </div>
   </div>
 
@@ -85,7 +79,7 @@
     </div>
   </div>
 
-  <!-- Beds (exact numeric match from beds_list) -->
+  <!-- Beds -->
   <div class="col-6 col-md-2">
     <div class="form-floating">
       {% set selected_beds = request.args.get('beds','') %}
@@ -164,34 +158,4 @@
     <button type="submit" class="btn btn-primary rounded-3 shadow-sm px-4">Apply</button>
     <a href="{{ url_for('home') }}" class="btn btn-outline-secondary rounded-3 shadow-sm px-4">Clear</a>
   </div>
-
 </div>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
-<style>
-  .choices__inner{ border-radius:.75rem; border-color:rgba(0,86,210,.25) }
-  .form-floating > .choices{ min-height:3.5rem }
-  .form-floating > .choices .choices__inner{ min-height:3.5rem; display:flex; align-items:center; padding:.5rem .75rem }
-  .form-floating > .choices ~ label{ top:.65rem; left:.75rem; background:#fff; padding:0 .35rem; transition:.2s; opacity:.85 }
-  .form-floating > .choices.is-focused ~ label,
-  .form-floating > .choices.is-open ~ label,
-  .form-floating > .choices.has-items ~ label{ top:-.4rem; left:.65rem; font-size:.8rem; opacity:.95 }
-  .choices__list--dropdown{ width:100%; border-radius:.75rem; border:1px solid rgba(0,86,210,.25); box-shadow:0 10px 24px rgba(0,0,0,.08); z-index:1056; max-height:260px; overflow:auto }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-<script>
-  (function(){
-    if (window._choicesInitDone) return;
-    window._choicesInitDone = true;
-    document.querySelectorAll('.js-choices-single').forEach(function(el){
-      new Choices(el, {
-        searchEnabled: true,
-        shouldSort: false,
-        removeItemButton: false,
-        placeholder: true,
-        allowHTML: false,
-        searchPlaceholderValue: 'Search…'
-      });
-    });
-  })();
-</script>
