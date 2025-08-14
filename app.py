@@ -1,6 +1,6 @@
 import os
 import re
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from pymongo import MongoClient
 from bson import ObjectId
 
@@ -20,6 +20,20 @@ client = MongoClient(MONGO_URI)
 db = client.get_database(DB_NAME)
 collection = db[COLLECTION_NAME]
 
+# Optional: helpful indexes (safe to leave; they’ll no-op if they exist)
+try:
+    collection.create_index("city")
+    collection.create_index("building_name")
+    collection.create_index("community")
+    collection.create_index("sub_community")
+    collection.create_index("property_type")
+    collection.create_index("sub_type")
+    collection.create_index("area_sqft")
+    collection.create_index("price")
+    collection.create_index("beds")
+except Exception:
+    pass
+
 
 # -----------------------------
 # Helpers
@@ -32,9 +46,7 @@ def _to_float(val):
 
 
 def _clean_text_list(vals):
-    """
-    Drop Nones/empties/nan-like values, return sorted unique strings.
-    """
+    """Drop Nones/empties/nan-like values, return sorted unique strings."""
     out = []
     for v in vals:
         if v is None:
@@ -43,16 +55,12 @@ def _clean_text_list(vals):
         if not s or s.lower() in ("nan", "null", "none"):
             continue
         out.append(s)
-    return sorted({*out})  # unique + sorted
+    # unique + sorted (case-insensitive)
+    return sorted(set(out), key=lambda x: x.lower())
 
 
 def _clean_beds_list(vals):
-    """
-    Normalize beds for dropdown:
-    - keep numeric values (e.g., "2", 2.0)
-    - cast to int when possible (so 2.0 -> 2)
-    - sort ascending
-    """
+    """Normalize beds for dropdown, keep numeric values and sort."""
     cleaned = []
     for v in vals:
         if v is None:
@@ -70,10 +78,7 @@ def _clean_beds_list(vals):
 
 
 def _regex_contains(text):
-    """
-    Case-insensitive 'contains' regex for Mongo without special char injection issues.
-    Escapes regex metacharacters in user input.
-    """
+    """Case-insensitive 'contains' regex for Mongo, with escaping."""
     if text is None:
         return None
     safe = re.escape(str(text))
@@ -81,29 +86,16 @@ def _regex_contains(text):
 
 
 def _fallback_image_for(prop_id_str: str) -> str:
-    """
-    Picks a fallback building/property image from a curated set based on the property's ID.
-    """
+    """Pick a nice fallback image based on the property's _id."""
     images = [
-        
-        # Luxury villa exterior
         "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?q=80&w=1200&auto=format&fit=crop",
-        # Modern apartment building
         "https://images.unsplash.com/photo-1484154218962-a197022b5858?q=80&w=1200&auto=format&fit=crop",
-        
-        # Suburban luxury home
         "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?q=80&w=1200&auto=format&fit=crop",
-        # High-rise building
         "https://images.unsplash.com/photo-1501183638710-841dd1904471?q=80&w=1200&auto=format&fit=crop",
-        # Hotel lobby/luxury interior
         "https://images.unsplash.com/photo-1556020685-ae41abfc9365?q=80&w=1200&auto=format&fit=crop",
-        # Modern skyscraper close-up
         "https://images.unsplash.com/photo-1460317442991-0ec209397118?q=80&w=1200&auto=format&fit=crop",
-        # Residential community
         "https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1200&auto=format&fit=crop",
-       
-        # Scenic luxury house
-        "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?q=80&w=1200&auto=format&fit=crop"
+        "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?q=80&w=1200&auto=format&fit=crop",
     ]
     try:
         seed = int(str(prop_id_str)[-6:], 16)
@@ -112,12 +104,8 @@ def _fallback_image_for(prop_id_str: str) -> str:
     return images[seed % len(images)]
 
 
-
 def _attach_hero_img(doc):
-    """
-    Add 'hero_img' to a property dict using its own image_url if present,
-    else fallback image chosen deterministically by _id.
-    """
+    """Add 'hero_img' using explicit image_url or a deterministic fallback."""
     if not isinstance(doc, dict):
         return doc
     img = (doc.get("image_url") or "").strip() if isinstance(doc.get("image_url"), str) else ""
@@ -125,14 +113,121 @@ def _attach_hero_img(doc):
     return doc
 
 
+def _clean_opts(vals):
+    """Small cleaner for cascade distincts."""
+    out = []
+    for v in vals:
+        if v is None:
+            continue
+        s = str(v).strip()
+        if not s or s.lower() in ("none", "null", "nan"):
+            continue
+        out.append(s)
+    return sorted(set(out), key=lambda x: x.lower())
+
+
+def distinct_any(names, q=None):
+    """Return the first non-empty distinct list across possible field aliases."""
+    for n in names:
+        vals = collection.distinct(n, q or {})
+        cleaned = _clean_text_list(vals)
+        if cleaned:
+            return cleaned
+    return []
+
+
 # -----------------------------
-# Routes
+# Small APIs for cascading filters
+# -----------------------------
+@app.get("/api/cities")
+def api_cities():
+    vals = _clean_opts(collection.distinct("city"))
+    return jsonify({"cities": vals})
+
+
+@app.get("/api/cascade_options")
+def api_cascade_options():
+    """
+    Returns options limited by current selections.
+    Supported query params: city, building_name, community
+    """
+    city = (request.args.get("city") or "").strip()
+    bldg = (request.args.get("building_name") or "").strip()
+    comm = (request.args.get("community") or "").strip()
+
+    q = {}
+    if city:
+        q["city"] = city
+    if bldg:
+        q["building_name"] = bldg
+    if comm:
+        q["community"] = comm
+
+    cur = collection.find(q, {"building_name": 1, "community": 1, "sub_community": 1})
+    buildings, communities, subcomms = set(), set(), set()
+    for doc in cur:
+        if doc.get("building_name"):
+            buildings.add(str(doc["building_name"]).strip())
+        if doc.get("community"):
+            communities.add(str(doc["community"]).strip())
+        if doc.get("sub_community"):
+            subcomms.add(str(doc["sub_community"]).strip())
+
+    return jsonify(
+        {
+            "buildings": sorted(buildings),
+            "communities": sorted(communities),
+            "sub_communities": sorted(subcomms),
+        }
+    )
+
+
+# --- Optional type APIs (for future type/sub-type cascading on the client) ---
+@app.get("/api/types")
+def api_types():
+    """
+    Returns distinct property types. Optional filters:
+    city, building_name, community, sub_community
+    """
+    q = {}
+    for key in ("city", "building_name", "community", "sub_community"):
+        val = (request.args.get(key) or "").strip()
+        if val:
+            q[key] = val
+    types_ = _clean_opts(collection.distinct("property_type", q))
+    return jsonify({"property_types": types_})
+
+
+@app.get("/api/subtypes")
+def api_subtypes():
+    """
+    Returns distinct sub types. Optional filters (and 'property_type' for linking):
+    city, building_name, community, sub_community, property_type
+    """
+    q = {}
+    for key in ("city", "building_name", "community", "sub_community", "property_type"):
+        val = (request.args.get(key) or "").strip()
+        if val:
+            q[key] = val
+    sub_types = _clean_opts(collection.distinct("sub_type", q))
+    return jsonify({"sub_types": sub_types})
+
+
+# --- tiny debug helper: see distinct values quickly in browser ---
+@app.get("/debug/distinct/<field>")
+def debug_distinct(field):
+    vals = list(collection.distinct(field))
+    return jsonify({"count": len(vals), "sample": vals[:50]})
+
+
+# -----------------------------
+# Pages
 # -----------------------------
 @app.route("/")
 def home():
     query = {}
 
-    # --------- Search (partial)
+    # Free-text search across several fields
     search = request.args.get("building")
     if search:
         rx = _regex_contains(search)
@@ -142,24 +237,31 @@ def home():
             {"sub_community": rx},
             {"city": rx},
             {"owners.owner_name": rx},
-            {"owners.contacts": rx},  # array of strings is fine
+            {"owners.contacts": rx},
         ]
 
-    # --------- Exact match filters
-    # property_type, community, sub_type, land_number (strings), beds (numeric)
-    for key in ["property_type", "community", "city", "sub_community", "sub_type", "land_number"]:
+    # Exact match filters (include building_name to work with cascade)
+    for key in [
+        "property_type",
+        "community",
+        "city",
+        "sub_community",
+        "sub_type",
+        "land_number",
+        "building_name",
+    ]:
         val = request.args.get(key)
         if val not in (None, ""):
             query[key] = val
 
-
+    # Beds (exact; change to {"$gte": f} for N+)
     beds_val = request.args.get("beds")
     if beds_val not in (None, ""):
         f = _to_float(beds_val)
         if f is not None:
-            query["beds"] = f  # exact match (switch to {"$gte": f} for "N+")
+            query["beds"] = f
 
-    # --------- Area range
+    # Area range
     min_area = _to_float(request.args.get("min_area"))
     max_area = _to_float(request.args.get("max_area"))
     if min_area is not None or max_area is not None:
@@ -171,7 +273,7 @@ def home():
         if rng:
             query["area_sqft"] = rng
 
-    # --------- Price range
+    # Price range
     min_price = _to_float(request.args.get("min_price"))
     max_price = _to_float(request.args.get("max_price"))
     if min_price is not None or max_price is not None:
@@ -183,7 +285,7 @@ def home():
         if rng:
             query["price"] = rng
 
-    # --------- Sorting (default: area_sqft desc)
+    # Sorting (default area_sqft desc)
     sort_map = {
         "price": "price",
         "area_sqft": "area_sqft",
@@ -195,7 +297,7 @@ def home():
     sort_order = request.args.get("order") or "desc"
     sort_dir = 1 if sort_order == "asc" else -1
 
-    # --------- Pagination
+    # Pagination
     try:
         page = int(request.args.get("page", 1) or 1)
         if page < 1:
@@ -205,55 +307,47 @@ def home():
     per_page = 12
     skip = (page - 1) * per_page
 
-    # --------- Counts (for stats + pages)
+    # Counts
     total_properties = collection.count_documents(query)
     total_pages = max((total_properties + per_page - 1) // per_page, 1)
     if page > total_pages:
         page = total_pages
         skip = (page - 1) * per_page
 
-    # --------- Fetch page
-    cursor = (
-        collection.find(query)
-        .sort(sort_field, sort_dir)
-        .skip(skip)
-        .limit(per_page)
-    )
+    # Fetch page
+    cursor = collection.find(query).sort(sort_field, sort_dir).skip(skip).limit(per_page)
     properties = [_attach_hero_img(p) for p in cursor]
 
-    # --------- Dropdown options (cleaned)
-    property_types = _clean_text_list(collection.distinct("property_type"))
+    # Dropdown options (cleaned)
+    property_types = distinct_any(["property_type", "propertyType", "Property Type"])
+    sub_types = distinct_any(["sub_type", "subType", "Sub Type"])
     communities = _clean_text_list(collection.distinct("community"))
     sub_communities = _clean_text_list(collection.distinct("sub_community"))
     cities = _clean_text_list(collection.distinct("city"))
-    sub_types = _clean_text_list(collection.distinct("sub_type"))
     land_numbers = _clean_text_list(collection.distinct("land_number"))
     beds_list = _clean_beds_list(collection.distinct("beds"))
 
-    dropdowns = {
-        "property_types": property_types,
-        "communities": communities,
-        "sub_communities": sub_communities,
-        "cities": cities,
-        "sub_types": sub_types,
-        "land_numbers": land_numbers,
-        "beds_list": beds_list,
-    }
-
-    # --------- Stats for hero
+    # Stats for hero
     total_communities = len(communities)
     total_cities = len(cities)
     total_count = total_properties
 
-    # --------- Preserve query args for pagination links
+    # Preserve query args for pagination links
     query_args = request.args.to_dict()
     query_args.pop("page", None)
 
     return render_template(
         "index.html",
         properties=properties,
-        dropdowns=dropdowns,
-        # expose individually for templates
+        dropdowns={
+            "property_types": property_types,
+            "communities": communities,
+            "sub_communities": sub_communities,
+            "cities": cities,
+            "sub_types": sub_types,
+            "land_numbers": land_numbers,
+            "beds_list": beds_list,
+        },
         property_types=property_types,
         communities=communities,
         sub_communities=sub_communities,
@@ -264,7 +358,6 @@ def home():
         total_pages=total_pages,
         current_page=page,
         query_args=query_args,
-        # hero stats
         total_count=total_count,
         total_communities=total_communities,
         total_cities=total_cities,
