@@ -167,31 +167,145 @@
       .hero-sub{ font-size:1.125rem }
     }
 
-    /* keep hero above the next section */
+    /* --- Wave & stacking --- */
 .hero{
   position: relative;
-  z-index: 2;                 /* higher than the section below */
-  padding-bottom: 4.5rem;     /* (tweak) space for the wave */
+  z-index: 2;             /* above the next section */
+  padding-bottom: 4.5rem; /* space for wave */
 }
-
 .hero::after{
   content:"";
-  position:absolute;
-  left:0; right:0;
-  height:110px;               /* (tweak) wave thickness */
-  bottom:-40px;               /* (tweak) push wave down */
-  z-index: 3;                 /* sits above cards */
-  pointer-events: none;       /* wave won't block clicks/hover */
+  position:absolute; left:0; right:0;
+  height:110px; bottom:-40px;       /* push wave down a bit */
+  z-index: 3; pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg width='1440' height='80' viewBox='0 0 1440 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,40 C240,100 480,-20 720,20 C960,60 1200,20 1440,40 L1440,80 L0,80 Z' fill='%23f4f6fc'/%3E%3C/svg%3E")
-             center/cover no-repeat;
+           center/cover no-repeat;
   filter: drop-shadow(0 -1px 0 rgba(255,255,255,.2));
 }
-
-/* place the card section under the wave and tuck it up */
 .section-bg{
   position: relative;
-  z-index: 1;                 /* below the hero/wave */
-  margin-top: -8px;           /* (tweak) closes gap under wave */
+  z-index: 1;           /* below hero wave */
+  margin-top: -8px;     /* tuck up under the wave */
+}
+
+/* --- Let menus overflow on mobile & desktop filter areas --- */
+.section-bg,
+.filter-desktop, .filter-desktop .row, .filter-desktop .form-floating,
+.filter-mobile, .filter-mobile .accordion, .filter-mobile .accordion-item,
+.filter-mobile .accordion-body, .filter-mobile .card, .filter-mobile .card-body {
+  overflow: visible !important;
+}
+
+/* Filters should sit above the wave */
+.filter-desktop .row,
+.filter-mobile .card {
+  position: relative;
+  z-index: 3000;
+}
+
+/* --- Choices.js layers --- */
+.choices { z-index: 3100 !important; }
+.choices__list--dropdown,
+.choices__list[aria-expanded]{
+  position: absolute;
+  z-index: 3200 !important;
+  width: 100%;
+  max-height: 260px;
+  overflow: auto;
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+}
+
+/* Keep the search input pinned at the top of the dropdown */
+.choices__list--dropdown .choices__input{
+  position: sticky;
+  top: 0;
+  background:#fff;
+  z-index: 1;
+  border-bottom: 1px solid #ddd;
+}
+/* Let each form row allow the menu to spill out */
+.filter-desktop,
+.filter-desktop .row,
+.filter-mobile,
+.filter-mobile .accordion-body,
+.form-floating {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Labels shouldn’t sit above the menu */
+.form-floating > label{
+  z-index: 1;              /* keep label behind the menu */
+  pointer-events: none;    /* clicks go to the input/menu */
+}
+
+/* Base stacking for Choices input wrapper */
+.form-floating .choices{
+  position: relative;
+  z-index: 10;
+}
+
+/* When a Choices is opened, lift it above neighboring fields */
+.form-floating .choices.is-open{
+  z-index: 5000;           /* higher than other .form-floating blocks */
+}
+
+/* The dropdown itself must sit on top of everything nearby */
+.form-floating .choices__list--dropdown,
+.form-floating .choices__list[aria-expanded]{
+  position: absolute;
+  z-index: 6000;           /* higher than the wrapper */
+  width: 100%;
+  max-height: 260px;
+  overflow: auto;
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+  background: #fff;        /* ensure it’s opaque over inputs below */
+}
+
+/* Keep the search box visible when scrolling the menu */
+.form-floating .choices__list--dropdown .choices__input{
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Let menus escape their parents */
+.form-floating { 
+  position: relative; 
+  overflow: visible !important; 
+  z-index: 1;                   /* baseline below the opened one */
+}
+
+/* When a Choices field opens, lift THIS .form-floating above neighbors */
+.form-floating:has(.choices.is-open),
+.form-floating:has(.choices.is-focused) {
+  z-index: 9999;                /* sits above the other dropdown titles */
+}
+
+/* Make sure the menu itself is on top */
+.form-floating .choices {
+  position: relative;
+  z-index: 10000;               /* wrapper above siblings */
+}
+.form-floating .choices__list--dropdown,
+.form-floating .choices__list[aria-expanded]{
+  position: absolute;
+  z-index: 11000;               /* menu above everything nearby */
+  width: 100%;
+  max-height: 260px;
+  overflow: auto;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+}
+
+/* If you use the mobile accordion, keep overflow open there too */
+.filter-mobile,
+.filter-mobile .accordion,
+.filter-mobile .accordion-item,
+.filter-mobile .accordion-body {
+  overflow: visible !important;
 }
 
 
