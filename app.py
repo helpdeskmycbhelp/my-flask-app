@@ -20,7 +20,7 @@ client = MongoClient(MONGO_URI)
 db = client.get_database(DB_NAME)
 collection = db[COLLECTION_NAME]
 
-# Optional: helpful indexes (safe to leave; they’ll no-op if they exist)
+# Helpful indexes (safe to run repeatedly; they'll no-op if they already exist)
 try:
     collection.create_index("city")
     collection.create_index("building_name")
@@ -28,6 +28,8 @@ try:
     collection.create_index("sub_community")
     collection.create_index("property_type")
     collection.create_index("sub_type")
+    collection.create_index("municipality_number")
+    collection.create_index("municipality_sub_number")
     collection.create_index("area_sqft")
     collection.create_index("price")
     collection.create_index("beds")
@@ -137,7 +139,7 @@ def distinct_any(names, q=None):
 
 
 # -----------------------------
-# Small APIs for cascading filters
+# Small APIs for cascading filters (location tree)
 # -----------------------------
 @app.get("/api/cities")
 def api_cities():
@@ -182,12 +184,14 @@ def api_cascade_options():
     )
 
 
-# --- Optional type APIs (for future type/sub-type cascading on the client) ---
+# -----------------------------
+# Optional type APIs (for property type → sub type cascading)
+# -----------------------------
 @app.get("/api/types")
 def api_types():
     """
-    Returns distinct property types. Optional filters:
-    city, building_name, community, sub_community
+    Returns distinct property types.
+    Optional filters: city, building_name, community, sub_community
     """
     q = {}
     for key in ("city", "building_name", "community", "sub_community"):
@@ -201,8 +205,8 @@ def api_types():
 @app.get("/api/subtypes")
 def api_subtypes():
     """
-    Returns distinct sub types. Optional filters (and 'property_type' for linking):
-    city, building_name, community, sub_community, property_type
+    Returns distinct sub types.
+    Optional filters: city, building_name, community, sub_community, property_type
     """
     q = {}
     for key in ("city", "building_name", "community", "sub_community", "property_type"):
@@ -213,7 +217,9 @@ def api_subtypes():
     return jsonify({"sub_types": sub_types})
 
 
-# --- tiny debug helper: see distinct values quickly in browser ---
+# -----------------------------
+# Tiny debug helper
+# -----------------------------
 @app.get("/debug/distinct/<field>")
 def debug_distinct(field):
     vals = list(collection.distinct(field))
@@ -240,19 +246,33 @@ def home():
             {"owners.contacts": rx},
         ]
 
-    # Exact match filters (include building_name to work with cascade)
+    # --- Exact match filters ---
+    # Accept legacy UI names and map them to actual Mongo field names.
+    # location/type fields (saved as-is)
     for key in [
         "property_type",
         "community",
         "city",
         "sub_community",
         "sub_type",
-        "land_number",
         "building_name",
     ]:
         val = request.args.get(key)
         if val not in (None, ""):
             query[key] = val
+
+    # municipality / land numbers
+    # UI may send ?land_number=...  -> real field = municipality_number
+    land_number_ui = request.args.get("land_number")  # legacy name in the form
+    mun_number_ui = request.args.get("municipality_number")  # if you update the form later
+    final_mun_number = mun_number_ui or land_number_ui
+    if final_mun_number not in (None, ""):
+        query["municipality_number"] = final_mun_number
+
+    # optional municipality sub number (add a select in the form if desired)
+    mun_sub_ui = request.args.get("municipality_sub_number")
+    if mun_sub_ui not in (None, ""):
+        query["municipality_sub_number"] = mun_sub_ui
 
     # Beds (exact; change to {"$gte": f} for N+)
     beds_val = request.args.get("beds")
@@ -319,13 +339,14 @@ def home():
     properties = [_attach_hero_img(p) for p in cursor]
 
     # Dropdown options (cleaned)
-    property_types = distinct_any(["property_type", "propertyType", "Property Type"])
-    sub_types = distinct_any(["sub_type", "subType", "Sub Type"])
-    communities = _clean_text_list(collection.distinct("community"))
-    sub_communities = _clean_text_list(collection.distinct("sub_community"))
-    cities = _clean_text_list(collection.distinct("city"))
-    land_numbers = _clean_text_list(collection.distinct("land_number"))
-    beds_list = _clean_beds_list(collection.distinct("beds"))
+    property_types   = distinct_any(["property_type", "propertyType", "Property Type"])
+    sub_types        = distinct_any(["sub_type", "subType", "Sub Type"])
+    communities      = _clean_text_list(collection.distinct("community"))
+    sub_communities  = _clean_text_list(collection.distinct("sub_community"))
+    cities           = _clean_text_list(collection.distinct("city"))
+    land_numbers     = _clean_text_list(collection.distinct("municipality_number"))
+    land_sub_numbers = _clean_text_list(collection.distinct("municipality_sub_number"))
+    beds_list        = _clean_beds_list(collection.distinct("beds"))
 
     # Stats for hero
     total_communities = len(communities)
@@ -346,6 +367,7 @@ def home():
             "cities": cities,
             "sub_types": sub_types,
             "land_numbers": land_numbers,
+            "land_sub_numbers": land_sub_numbers,
             "beds_list": beds_list,
         },
         property_types=property_types,
@@ -355,6 +377,7 @@ def home():
         sub_types=sub_types,
         beds_list=beds_list,
         land_numbers=land_numbers,
+        land_sub_numbers=land_sub_numbers,
         total_pages=total_pages,
         current_page=page,
         query_args=query_args,
