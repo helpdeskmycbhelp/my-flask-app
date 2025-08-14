@@ -2,75 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{{ prop.building_name }} - Unit {{ prop.unit_number }} | Property Details</title>
+  <title>{{ (prop.building_name or 'Property') }}{% if prop.unit_number %} - Unit {{ prop.unit_number }}{% endif %} | Property Details</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <!-- Bootstrap + Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <style>
-    :root{
-      --cb-primary:#0056d2;
-      --cb-dark:#0b2a66;
-      --cb-bg:#f4f6fc;
-      --glass: rgba(255,255,255,.8);
-    }
-    body{background:var(--cb-bg); font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial}
 
-    /* Hero */
-    .hero{
-      position:relative; overflow:hidden; color:#fff;
+  <style>
+    :root{ --cb-primary:#0056d2; --cb-dark:#0b2a66; --cb-bg:#f4f6fc; --glass: rgba(255,255,255,.8); }
+    body{ background:var(--cb-bg); font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial }
+    .hero{ position:relative; overflow:hidden; color:#fff;
       background:
         radial-gradient(1000px 500px at -10% 0%, rgba(255,255,255,.18) 0%, rgba(255,255,255,0) 60%),
         linear-gradient(135deg,#0d47a1 0%,#1976d2 50%,#42a5f5 100%);
     }
     .hero .breadcrumb{ --bs-breadcrumb-divider: '›'; }
-    .hero-wave{
-      position:absolute; left:0; right:0; bottom:-1px; height:60px;
+    .hero-wave{ position:absolute; left:0; right:0; bottom:-1px; height:60px;
       background:url("data:image/svg+xml,%3Csvg width='1440' height='70' viewBox='0 0 1440 70' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,35 C280,90 520,-10 760,20 C1000,50 1220,20 1440,35 L1440,70 L0,70 Z' fill='%23f4f6fc'/%3E%3C/svg%3E") center/cover no-repeat;
       filter:drop-shadow(0 -1px 0 rgba(255,255,255,.2));
     }
-
-    /* Cards */
-    .card{
-      border:1px solid rgba(0,86,210,.12);
-      border-radius:16px;
-      background:linear-gradient(180deg,var(--glass),#fff);
-      box-shadow:0 12px 30px rgba(0,0,0,.06);
-    }
-    .card-header{
-      background:transparent; border-bottom:1px dashed rgba(0,86,210,.18);
-      font-weight:700; color:var(--cb-dark);
-    }
-
-    /* Pills / chips */
-    .chip{display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .65rem;
-      border-radius:999px; background:#eef4ff; color:#174ea6;
-      border:1px solid rgba(0,86,210,.18); font-size:.86rem; margin:.15rem .25rem .15rem 0;
-    }
-    .chip .bi{font-size:1rem}
-
-    /* Info list */
-    .info-grid{row-gap:.5rem}
-    .info-item{display:flex; gap:.5rem; align-items:center; color:#324b72}
-    .info-item .icon{width:36px; height:36px; display:grid; place-items:center; border-radius:10px;
-      background:#eef4ff; border:1px solid rgba(0,86,210,.15); color:#174ea6}
-
-    /* Owners table */
-    .table thead th{background:#f1f5ff; color:#173a7a; border-color:rgba(0,86,210,.15)}
-    .table td, .table th{vertical-align:middle}
-    .contact-badge{display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .6rem;
-      background:#f8fafc; border:1px dashed rgba(0,86,210,.2); border-radius:999px; margin:.15rem .25rem .15rem 0}
-    .contact-actions .btn{border-radius:999px}
-
-    /* Sticky bottom actions (mobile) */
-    .sticky-actions{
-      position:sticky; bottom:0; z-index:100; background:rgba(244,246,252,.8);
-      backdrop-filter:blur(8px); border-top:1px solid rgba(0,0,0,.06); padding:.75rem
-    }
-
-    @media (max-width:768px){
-      .hero h1{font-size:1.4rem}
-    }
+    .card{ border:1px solid rgba(0,86,210,.12); border-radius:16px; background:linear-gradient(180deg,var(--glass),#fff); box-shadow:0 12px 30px rgba(0,0,0,.06) }
+    .card-header{ background:transparent; border-bottom:1px dashed rgba(0,86,210,.18); font-weight:700; color:var(--cb-dark) }
+    .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.4rem .65rem; border-radius:999px; background:#eef4ff; color:#174ea6; border:1px solid rgba(0,86,210,.18); font-size:.86rem; margin:.15rem .25rem .15rem 0 }
+    .chip .bi{ font-size:1rem }
+    .info-grid{ row-gap:.5rem }
+    .info-item{ display:flex; gap:.5rem; align-items:center; color:#324b72 }
+    .info-item .icon{ width:36px; height:36px; display:grid; place-items:center; border-radius:10px; background:#eef4ff; border:1px solid rgba(0,86,210,.15); color:#174ea6 }
+    .table thead th{ background:#f1f5ff; color:#173a7a; border-color:rgba(0,86,210,.15) }
+    .table td, .table th{ vertical-align:middle }
+    .contact-badge{ display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .6rem; background:#f8fafc; border:1px dashed rgba(0,86,210,.2); border-radius:999px; margin:.15rem .25rem .15rem 0 }
+    .contact-actions .btn{ border-radius:999px }
+    .sticky-actions{ position:sticky; bottom:0; z-index:100; background:rgba(244,246,252,.8); backdrop-filter:blur(8px); border-top:1px solid rgba(0,0,0,.06); padding:.75rem }
+    @media (max-width:768px){ .hero h1{ font-size:1.4rem } }
   </style>
 </head>
 <body>
@@ -84,15 +48,19 @@
           <li class="breadcrumb-item active text-white-50" aria-current="page">Details</li>
         </ol>
       </nav>
-      <h1 class="mb-2">{{ prop.building_name }} • Unit {{ prop.unit_number }}</h1>
+      <h1 class="mb-2">
+        {{ prop.building_name or 'Property' }}
+        {% if prop.unit_number %} • Unit {{ prop.unit_number }}{% endif %}
+      </h1>
+
       <div class="d-flex flex-wrap">
         {% if prop.city %}<span class="chip"><i class="bi bi-buildings"></i>{{ prop.city }}</span>{% endif %}
         {% if prop.community %}<span class="chip"><i class="bi bi-geo-alt"></i>{{ prop.community }}</span>{% endif %}
         {% if prop.sub_community %}<span class="chip"><i class="bi bi-geo"></i>{{ prop.sub_community }}</span>{% endif %}
         {% if prop.property_type %}<span class="chip"><i class="bi bi-houses"></i>{{ prop.property_type }}</span>{% endif %}
         {% if prop.sub_type %}<span class="chip"><i class="bi bi-tags"></i>{{ prop.sub_type }}</span>{% endif %}
-        {% if prop.land_number %}<span class="chip"><i class="bi bi-hash"></i>Mun No {{ prop.land_number }}</span>{% endif %}
-        {% if prop.land_sub_num %}<span class="chip"><i class="bi bi-hash"></i>Mun Sub No {{ prop.land_sub_num }}</span>{% endif %}
+        {% if prop.municipality_number %}<span class="chip"><i class="bi bi-hash"></i>Mun No {{ prop.municipality_number }}</span>{% endif %}
+        {% if prop.municipality_sub_number %}<span class="chip"><i class="bi bi-hash"></i>Mun Sub No {{ prop.municipality_sub_number }}</span>{% endif %}
       </div>
     </div>
     <div class="hero-wave"></div>
@@ -125,7 +93,8 @@
               <div class="col-12 col-md-6">
                 <div class="info-item">
                   <div class="icon"><i class="bi bi-door-open"></i></div>
-                  <div><div class="text-muted small">Beds</div>
+                  <div>
+                    <div class="text-muted small">Beds</div>
                     <div class="fw-semibold">{{ prop.beds or "N/A" }}</div>
                   </div>
                 </div>
@@ -134,7 +103,8 @@
               <div class="col-12 col-md-6">
                 <div class="info-item">
                   <div class="icon"><i class="bi bi-currency-exchange"></i></div>
-                  <div><div class="text-muted small">Price</div>
+                  <div>
+                    <div class="text-muted small">Price</div>
                     <div class="fw-bold text-success">
                       {% if prop.price is number %} AED {{ "{:,.0f}".format(prop.price) }}
                       {% else %} {{ prop.price or "N/A" }} {% endif %}
@@ -146,7 +116,8 @@
               <div class="col-12 col-md-6">
                 <div class="info-item">
                   <div class="icon"><i class="bi bi-buildings"></i></div>
-                  <div><div class="text-muted small">City</div>
+                  <div>
+                    <div class="text-muted small">City</div>
                     <div class="fw-semibold">{{ prop.city or "N/A" }}</div>
                   </div>
                 </div>
@@ -155,7 +126,8 @@
               <div class="col-12 col-md-6">
                 <div class="info-item">
                   <div class="icon"><i class="bi bi-pin-map"></i></div>
-                  <div><div class="text-muted small">Community</div>
+                  <div>
+                    <div class="text-muted small">Community</div>
                     <div class="fw-semibold">{{ prop.community or "N/A" }}</div>
                   </div>
                 </div>
@@ -164,7 +136,8 @@
               <div class="col-12 col-md-6">
                 <div class="info-item">
                   <div class="icon"><i class="bi bi-geo"></i></div>
-                  <div><div class="text-muted small">Sub Community</div>
+                  <div>
+                    <div class="text-muted small">Sub Community</div>
                     <div class="fw-semibold">{{ prop.sub_community or "N/A" }}</div>
                   </div>
                 </div>
@@ -173,8 +146,9 @@
               <div class="col-12 col-md-6">
                 <div class="info-item">
                   <div class="icon"><i class="bi bi-hash"></i></div>
-                  <div><div class="text-muted small">Municipality No</div>
-                    <div class="fw-semibold">{{ prop.land_number or "N/A" }}</div>
+                  <div>
+                    <div class="text-muted small">Municipality No</div>
+                    <div class="fw-semibold">{{ prop.municipality_number or "N/A" }}</div>
                   </div>
                 </div>
               </div>
@@ -182,8 +156,9 @@
               <div class="col-12 col-md-6">
                 <div class="info-item">
                   <div class="icon"><i class="bi bi-hash"></i></div>
-                  <div><div class="text-muted small">Municipality Sub No</div>
-                    <div class="fw-semibold">{{ prop.land_sub_num or "N/A" }}</div>
+                  <div>
+                    <div class="text-muted small">Municipality Sub No</div>
+                    <div class="fw-semibold">{{ prop.municipality_sub_number or "N/A" }}</div>
                   </div>
                 </div>
               </div>
@@ -207,7 +182,6 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {# Case A: owners array exists #}
                   {% if prop.owners and prop.owners|length %}
                     {% for owner in prop.owners %}
                       {% set nums = owner.contacts if owner.contacts is defined else [] %}
@@ -225,19 +199,13 @@
                                 <button class="btn btn-sm btn-outline-secondary" type="button" onclick="copyText('{{ clean }}')"><i class="bi bi-clipboard"></i></button>
                               </span><br>
                             {% endfor %}
-                          {% else %}
-                            N/A
-                          {% endif %}
+                          {% else %} N/A {% endif %}
                         </td>
                         <td>{{ owner.registration_date or 'N/A' }}</td>
                       </tr>
                     {% endfor %}
-
-                  {# Case B: flat single owner fields (backward compatibility) #}
                   {% elif prop.owner_name or prop.role or prop.reg_date or prop.contacts %}
-                    {% set flat_nums =
-                      (prop.contacts if prop.contacts is iterable and (prop.contacts is not string) else [prop.contacts])
-                      if prop.contacts else [] %}
+                    {% set flat_nums = (prop.contacts if prop.contacts is iterable and (prop.contacts is not string) else [prop.contacts]) if prop.contacts else [] %}
                     <tr>
                       <td class="fw-semibold">{{ prop.owner_name or 'N/A' }}</td>
                       <td>{{ prop.role or '—' }}</td>
@@ -255,10 +223,11 @@
                         {% else %} N/A {% endif %}
                       </td>
                       <td>
-                        {% if prop.reg_date %}{{ prop.reg_date }}{% elif prop.registration_date %}{{ prop.registration_date }}{% else %}N/A{% endif %}
+                        {% if prop.reg_date %}{{ prop.reg_date }}
+                        {% elif prop.registration_date %}{{ prop.registration_date }}
+                        {% else %}N/A{% endif %}
                       </td>
                     </tr>
-
                   {% else %}
                     <tr><td colspan="4" class="text-muted">No owner info available.</td></tr>
                   {% endif %}
@@ -272,8 +241,6 @@
 
       <!-- RIGHT: Summary / CTA -->
       <div class="col-lg-5">
-
-        <!-- Summary Card -->
         <div class="card mb-4">
           <div class="card-header px-4 py-3">Summary</div>
           <div class="card-body px-4">
@@ -304,7 +271,6 @@
           </div>
         </div>
 
-        <!-- Notes / Tags -->
         <div class="card">
           <div class="card-header px-4 py-3">Notes</div>
           <div class="card-body px-4">
